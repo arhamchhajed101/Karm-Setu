@@ -10,6 +10,38 @@ India has over **47,182 labour cooperatives** representing **9.1+ million member
 
 **KarmSetu** is a cooperative-owned digital operating platform that bridges the gap between household / institutional service demand and verified cooperative worker pools. It transforms traditional labour cooperatives into digitally managed, highly efficient, and transparent service networks.
 
+---
+
+## 🌐 24/7 Cloud Deployment (Live Link Setup)
+
+The repository is pre-configured with **Infrastructure-as-Code (`render.yaml`)** and **`frontend/vercel.json`** for free, 24/7 public hosting with automatic HTTPS and continuous deployment on every `git push`.
+
+### Option 1: 1-Click Render.com Blueprint (Backend + Frontend together)
+1. Sign in to [Render.com](https://render.com/) (Free tier available).
+2. Click **New +** → **Blueprint**.
+3. Connect your GitHub repository: `https://github.com/arhamchhajed101/Karm-Setu`.
+4. Render automatically detects [`render.yaml`](file:///render.yaml) and provisions:
+   - **`karmsetu-backend`** (Python 3.11 web service, runs DB migrations + seeder, exposes FastAPI & Swagger UI at `/docs`).
+   - **`karmsetu-frontend`** (Static site, builds React + Vite, auto-routes to backend).
+5. Click **Apply**. Within ~2 minutes, you will receive two 24/7 live URLs:
+   - 🌐 **Frontend Web App**: `https://karmsetu-frontend.onrender.com`
+   - 📡 **API & Swagger Docs**: `https://karmsetu-backend.onrender.com/docs`
+
+---
+
+### Option 2: Vercel (Frontend) + Render (Backend)
+- **Backend on Render**:
+  - Click **New +** → **Web Service** → Connect repo.
+  - Runtime: `Python 3`.
+  - Build Command: `pip install -r backend/requirements.txt && cd backend && python -m app.seed_data`
+  - Start Command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+  - Note your backend URL (e.g. `https://karmsetu-api.onrender.com`).
+- **Frontend on Vercel**:
+  - Import repo on [Vercel](https://vercel.com).
+  - Root Directory: `frontend`.
+  - Environment Variable: `VITE_API_URL` = `https://karmsetu-api.onrender.com`.
+  - Click **Deploy** to get a 24/7 instant URL (`https://karm-setu.vercel.app`).
+
 Unlike traditional private gig platforms, KarmSetu is built on:
 1. **Explainable Smart Fair Allocation Engine**: A deterministic 6-dimension scoring engine that optimizes for skill, proximity, and fairness without black-box bias.
 2. **Cooperative Revenue & Welfare Fund Split**: Enforces an 80% worker disbursement, 15% cooperative operations pool, and 5% worker welfare & insurance fund.
