@@ -241,4 +241,3 @@ This builds and boots the backend container on port `8000`, running the seeder a
 
 ## ⚖️ License
 Built for **Smart India Hackathon (SIH 2026)**.
-Developed with Google Antigravity.
