@@ -405,30 +405,59 @@ function getMockFallback<T>(endpoint: string, options: RequestInit = {}): T {
   if (endpoint.startsWith('/analytics/forecast')) return MOCK_FORECAST as unknown as T;
   if (endpoint.startsWith('/analytics/skill-gaps')) {
     return [
-      { trade: 'Plumber', active_workers: 18, projected_demand: 24, gap: -6, status: 'DEFICIT' },
-      { trade: 'Electrician', active_workers: 24, projected_demand: 20, gap: 4, status: 'SURPLUS' },
-      { trade: 'Carpenter', active_workers: 12, projected_demand: 14, gap: -2, status: 'DEFICIT' },
-      { trade: 'Painter', active_workers: 10, projected_demand: 8, gap: 2, status: 'BALANCED' },
+      {
+        zone: 'Central Delhi',
+        service_category: 'Plumbing',
+        required_skills: ['Pipe Fitting', 'Drainage Cleansing'],
+        current_worker_count: 18,
+        projected_peak_demand: 24,
+        deficit_count: 6,
+        severity: 'HIGH',
+        action_item: 'Activate off-duty standby roster and invite cross-cooperative roster sharing.',
+      },
+      {
+        zone: 'Central Delhi',
+        service_category: 'Carpentry',
+        required_skills: ['Joinery', 'Locksmithing'],
+        current_worker_count: 12,
+        projected_peak_demand: 14,
+        deficit_count: 2,
+        severity: 'MEDIUM',
+        action_item: 'Schedule apprenticeship transition for junior artisans before weekend peak.',
+      },
+      {
+        zone: 'Central Delhi',
+        service_category: 'Electrical',
+        required_skills: ['Wiring', 'Safety Compliance'],
+        current_worker_count: 26,
+        projected_peak_demand: 22,
+        deficit_count: 0,
+        severity: 'LOW',
+        action_item: 'Supply is balanced with healthy reserve capacity.',
+      },
     ] as unknown as T;
   }
   if (endpoint.startsWith('/analytics/heatmap')) {
     return [
-      { lat: 28.6139, lng: 77.2090, intensity: 0.95, area: 'Connaught Place' },
-      { lat: 28.5355, lng: 77.2600, intensity: 0.78, area: 'Nehru Place' },
-      { lat: 28.6280, lng: 77.0800, intensity: 0.82, area: 'Janakpuri' },
-      { lat: 28.5244, lng: 77.2066, intensity: 0.65, area: 'Saket' },
+      { zone: 'Connaught Place', latitude: 28.6315, longitude: 77.2167, total_bookings: 184, intensity: 0.95 },
+      { zone: 'Defence Colony', latitude: 28.5729, longitude: 77.2304, total_bookings: 142, intensity: 0.78 },
+      { zone: 'Saket District Centre', latitude: 28.5244, longitude: 77.2066, total_bookings: 126, intensity: 0.72 },
+      { zone: 'Karol Bagh Market', latitude: 28.6514, longitude: 77.1907, total_bookings: 110, intensity: 0.65 },
+      { zone: 'Janakpuri West', latitude: 28.6280, longitude: 77.0800, total_bookings: 96, intensity: 0.58 },
     ] as unknown as T;
   }
   if (endpoint.startsWith('/analytics/utilization')) {
     return {
-      gini_coefficient: 0.21,
-      target_gini: 0.25,
-      fairness_rating: 'OPTIMAL (High Income Equality)',
-      average_weekly_jobs: 3.2,
+      cooperative_id: 1,
+      average_utilization_rate: 3.4,
+      fairness_gini_coefficient: 0.21,
+      overworked_workers_count: 2,
+      underutilized_workers_count: 5,
+      optimal_workers_count: 57,
       utilization_distribution: [
-        { bracket: '0-2 jobs/wk', worker_count: 8 },
-        { bracket: '3-4 jobs/wk', worker_count: 42 },
-        { bracket: '5+ jobs/wk', worker_count: 14 },
+        { bracket: '0-2 jobs/wk', worker_count: 5 },
+        { bracket: '3-5 jobs/wk', worker_count: 57 },
+        { bracket: '6+ jobs/wk', worker_count: 2 },
       ],
     } as unknown as T;
   }

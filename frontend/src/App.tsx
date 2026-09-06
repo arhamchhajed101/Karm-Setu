@@ -6,6 +6,7 @@ import { WorkerView } from './views/WorkerView';
 import { CooperativeAdminView } from './views/CooperativeAdminView';
 import { AnalyticsView } from './views/AnalyticsView';
 import { InstitutionalView } from './views/InstitutionalView';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Logo } from './components/Logo';
 
 export const App: React.FC = () => {
@@ -24,11 +25,31 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1">
-        {activeTab === 'customer' && <CustomerView />}
-        {activeTab === 'worker' && <WorkerView />}
-        {activeTab === 'cooperative' && <CooperativeAdminView />}
-        {activeTab === 'analytics' && <AnalyticsView />}
-        {activeTab === 'institutional' && <InstitutionalView />}
+        {activeTab === 'customer' && (
+          <ErrorBoundary fallbackTitle="Customer Booking Portal Error">
+            <CustomerView />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'worker' && (
+          <ErrorBoundary fallbackTitle="Worker Operations Portal Error">
+            <WorkerView />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'cooperative' && (
+          <ErrorBoundary fallbackTitle="Cooperative Admin System Error">
+            <CooperativeAdminView />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'analytics' && (
+          <ErrorBoundary fallbackTitle="Demand Analytics Dashboard Error">
+            <AnalyticsView />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'institutional' && (
+          <ErrorBoundary fallbackTitle="Institutional Projects Portal Error">
+            <InstitutionalView />
+          </ErrorBoundary>
+        )}
       </main>
 
       {/* Sober Institutional Footer */}
