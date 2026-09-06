@@ -17,18 +17,13 @@ services:
       - ./backend/karmsetu.db:/app/karmsetu.db
     restart: unless-stopped
 
-  # Optional Postgres service for production testing:
-  # db:
-  #   image: postgres:15-alpine
-  #   container_name: karmsetu-postgres
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: password
-  #     POSTGRES_DB: karmsetu
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-
-# volumes:
-#   postgres_data:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: karmsetu-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

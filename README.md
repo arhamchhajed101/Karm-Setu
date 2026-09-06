@@ -131,10 +131,21 @@ python run_backend.py
 cd backend
 uvicorn app.main:app --reload --port 8000
 ```
-
 * **Interactive OpenAPI Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 * **ReDoc Interactive Documentation**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 * **Health Check Probe**: [http://localhost:8000/health](http://localhost:8000/health)
+
+### 5. Start the Frontend Application
+```bash
+cd frontend
+npm install
+npm run dev
+```
+* **KarmSetu Web Application**: [http://localhost:3000](http://localhost:3000)
+* Built with **React + TypeScript + Tailwind CSS**
+* Features **Sober Light Theme** (Civic slate, cream backgrounds, emerald verified badges)
+* Custom **KarmSetu Emblem Logo** (interlocking cooperative bridge arch)
+* One-click demo persona switcher for testing all 4 user roles directly from the navbar!
 
 ---
 
@@ -219,23 +230,33 @@ uvicorn app.main:app --reload --port 8000
 
 ---
 
-## 🎨 Guidance for Frontend Development
+## 🎨 Frontend Design & Visual Language
 
-The backend is completely decoupled and ready to connect to your Next.js / React frontend:
-* **Base API URL**: `http://localhost:8000/api/v1`
-* **CORS**: Configured out-of-the-box for `http://localhost:3000` (Next.js default)
-* **Auth**: Send `Authorization: Bearer <access_token>` in HTTP headers
-* **Maps**: Use Leaflet or MapLibre GL with the coordinates provided in `/api/v1/analytics/heatmap` and worker/job endpoints.
-* **Charts**: Feed the daily array from `/api/v1/analytics/forecast` directly into ReDoc or Recharts (`predicted_demand`, `confidence_low`, `confidence_high`).
+The frontend is built with a **sober, accessible, light civic theme** that avoids dark-mode neon/AI gimmicks, prioritizing clarity, institutional dignity, and speed:
+* **Color Palette**:
+  * Neutral Ground: `#F8FAFC` (soft slate white) & pure `#FFFFFF` cards with subtle `#E2E8F0` borders.
+  * Typography & Accents: Deep civic slate `#1E293B` and `#334155`.
+  * Trust & Verification: Emerald `#059669` / `#10B981` (Delhi police verified badges, active insurance).
+  * Cooperative Accent: Warm ochre `#D97706` / `#B45309` (emblem and subtle active indicators).
+* **Emblem Logo**: A custom SVG badge symbolizing cooperative labour unity: two stylized interlocking elements over an arched bridge (*Setu*).
+* **Connected to Backend**: Configured via Vite proxy to route all `/api/v1` calls to the FastAPI backend seamlessly.
+* **Integrated Views**:
+  1. **Customer Booking Portal**: Category filters, real-time transparent estimate calculator (base price + ₹50 travel fee + emergency surge), slot picker, and state machine job tracking.
+  2. **Worker Profile & Operations**: Instant availability toggle (`AVAILABLE`, `BUSY`, `OFF_DUTY`), active job queue with action buttons (`Accept`, `Start`, `Complete`), itemized earnings, and e-Shram PM-SYM / PMSBY insurance tracking.
+  3. **Cooperative Admin Operating System**: Executive workforce KPIs, roster table with police verification reference IDs, **Smart Fair Allocation Inspector** (live 6-factor deterministic scoring with explainable AI justifications, auto-assign, and manual override), and settlements revenue ledger.
+  4. **Demand Analytics**: Interactive 7-day Recharts forecast curves with upper/lower confidence intervals, seasonal index insights, trade deficit & skill gap alerts, and geospatial heatmap density.
+  5. **Institutional Multi-Worker Projects**: Enterprise contracts (CPWD, Delhi Metro, Apollo Hospital), skills breakdown, budget disbursement, and supervisor inspection checklists.
 
 ---
 
-## 🐳 Docker Deployment
+## 🐳 Docker Full-Stack Deployment
 
 ```bash
 docker-compose up --build
 ```
-This builds and boots the backend container on port `8000`, running the seeder and launching the production uvicorn server automatically.
+This builds and launches:
+1. **Backend** on [http://localhost:8000](http://localhost:8000) (running seeder and FastAPI server).
+2. **Frontend** on [http://localhost:3000](http://localhost:3000) (production Nginx container serving React application).
 
 ---
 
