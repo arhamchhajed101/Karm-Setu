@@ -3,7 +3,12 @@
  * Connects frontend to the FastAPI backend running on port 8000 (via Vite proxy /api/v1)
  */
 
-const API_BASE = '/api/v1';
+const rawApiUrl = import.meta.env.VITE_API_URL || '';
+const formattedApiUrl = (rawApiUrl.startsWith('http://') || rawApiUrl.startsWith('https://') || rawApiUrl === '')
+  ? rawApiUrl
+  : `https://${rawApiUrl}`;
+
+const API_BASE = formattedApiUrl ? `${formattedApiUrl.replace(/\/$/, '')}/api/v1` : '/api/v1';
 
 export interface User {
   id: number;
