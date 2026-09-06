@@ -181,6 +181,264 @@ export interface InstitutionalProject {
   milestones: { title: string; completed: boolean }[];
 }
 
+import {
+  MOCK_COOPERATIVES,
+  MOCK_SERVICES,
+  MOCK_WORKERS,
+  MOCK_JOBS,
+  MOCK_ALLOCATION_EVALUATION,
+  MOCK_FORECAST,
+  MOCK_PROJECTS,
+} from './mockData';
+
+// In-memory state for interactive mutations when backend is offline
+let stateJobs = [...MOCK_JOBS];
+let stateWorkers = [...MOCK_WORKERS];
+
+function getMockFallback<T>(endpoint: string, options: RequestInit = {}): T {
+  console.info(`[KarmSetu GitHub Pages Mode] Serving local simulation for: ${endpoint}`);
+  const method = (options.method || 'GET').toUpperCase();
+  let body: any = {};
+  try {
+    if (options.body) body = JSON.parse(options.body as string);
+  } catch (e) {
+    body = {};
+  }
+
+  // Auth
+  if (endpoint.startsWith('/auth/login')) {
+    const email = body.email || 'customer@karmsetu.in';
+    let role = 'customer';
+    let full_name = 'Vikram Malhotra';
+    if (email.includes('admin')) { role = 'cooperative_admin'; full_name = 'Anil Sharma (Society Secretary)'; }
+    else if (email.includes('worker')) { role = 'worker'; full_name = 'Ramesh Kumar Verma'; }
+    else if (email.includes('supervisor')) { role = 'supervisor'; full_name = 'Rajesh Tyagi (Govt Inspector)'; }
+    return { access_token: 'mock-jwt-token-karmsetu', token_type: 'bearer', user_id: 1, role, full_name } as unknown as T;
+  }
+  if (endpoint.startsWith('/auth/me')) {
+    const role = localStorage.getItem('karmsetu_demo_role') || 'customer';
+    return {
+      id: 1,
+      email: `${role}@karmsetu.in`,
+      full_name: role === 'cooperative_admin' ? 'Anil Sharma (Coop Admin)' : role === 'worker' ? 'Ramesh Kumar Verma' : 'Vikram Malhotra',
+      role,
+      worker_profile: role === 'worker' ? stateWorkers[0] : undefined,
+    } as unknown as T;
+  }
+
+  // Cooperatives
+  if (endpoint === '/cooperatives') return MOCK_COOPERATIVES as unknown as T;
+  if (endpoint.includes('/kpis')) {
+    return {
+      total_workers: 64,
+      active_today: 42,
+      completed_jobs: 412,
+      total_revenue: 284500,
+      welfare_pool: 42675,
+      fairness_index: '0.89 / 1.0 (Optimal)',
+      avg_hourly_earnings: 320,
+    } as unknown as T;
+  }
+  if (endpoint.includes('/roster')) return stateWorkers as unknown as T;
+
+  // Services & Estimates
+  if (endpoint.startsWith('/services')) return MOCK_SERVICES as unknown as T;
+  if (endpoint.startsWith('/jobs/estimate')) {
+    const service = MOCK_SERVICES.find(s => s.id === body.service_id) || MOCK_SERVICES[0];
+    const base = service.base_price;
+    const travel = 50;
+    const mult = body.is_emergency ? (service.emergency_multiplier || 1.4) : 1.0;
+    const est = Math.round((base + travel) * mult);
+    return {
+      service_id: service.id,
+      service_name: service.name,
+      base_price: base,
+      travel_fee: travel,
+      emergency_surcharge: body.is_emergency ? Math.round(base * (mult - 1)) : 0,
+      estimated_total: est,
+      cooperative_share: Math.round(est * 0.15),
+      worker_share: Math.round(est * 0.80),
+      welfare_share: Math.round(est * 0.05),
+    } as unknown as T;
+  }
+
+  // Workers
+  if (endpoint.startsWith('/workers') && endpoint.includes('/availability')) {
+    const id = parseInt(endpoint.split('/')[2]);
+    const worker = stateWorkers.find(w => w.id === id) || stateWorkers[0];
+    worker.availability_status = body.availability_status || 'AVAILABLE';
+    return worker as unknown as T;
+  }
+  if (endpoint.startsWith('/workers') && endpoint.includes('/earnings')) {
+    return {
+      total_earnings: 48600,
+      weekly_earnings: 5800,
+      welfare_balance: 14200,
+      settlement_count: 142,
+      schemes: [
+        { name: 'PM Shram Yogi Maan-Dhan (PM-SYM)', status: 'ACTIVE', monthly_contribution: 100 },
+        { name: 'Pradhan Mantri Suraksha Bima Yojana (PMSBY)', status: 'ACTIVE', sum_insured: 200000 },
+      ],
+    } as unknown as T;
+  }
+  if (endpoint.startsWith('/workers')) return stateWorkers as unknown as T;
+
+  // Jobs
+  if (endpoint.startsWith('/jobs') && method === 'POST' && !endpoint.includes('status') && !endpoint.includes('supervisor-verify')) {
+    const newJob: JobItem = {
+      id: 100 + stateJobs.length + 1,
+      booking_ref: `KS-JOB-2026-0${900 + stateJobs.length}`,
+      customer_id: 3,
+      customer_name: 'Vikram Malhotra',
+      customer_phone: '+91 98111 22334',
+      service_id: body.service_id || 1,
+      service_name: (MOCK_SERVICES.find(s => s.id === body.service_id)?.name) || 'Service Request',
+      service_category: (MOCK_SERVICES.find(s => s.id === body.service_id)?.category) || 'General',
+      cooperative_id: 1,
+      cooperative_name: 'Delhi Labour & Construction Cooperative Society',
+      status: 'REQUESTED',
+      slot_start: body.slot_start || new Date().toISOString(),
+      slot_end: body.slot_end || new Date(Date.now() + 7200000).toISOString(),
+      address: body.address || 'Central Delhi',
+      latitude: body.latitude || 28.6139,
+      longitude: body.longitude || 77.2090,
+      is_emergency: !!body.is_emergency,
+      price_estimate: 549.0,
+      payment_status: 'PENDING',
+      payment_method: body.payment_method || 'UPI',
+      customer_notes: body.customer_notes || 'Booked via KarmSetu web portal',
+      supervisor_verified: false,
+      created_at: new Date().toISOString(),
+    };
+    stateJobs = [newJob, ...stateJobs];
+    return newJob as unknown as T;
+  }
+  if (endpoint.includes('/status')) {
+    const parts = endpoint.split('/');
+    const jobId = parseInt(parts[2]);
+    const job = stateJobs.find(j => j.id === jobId);
+    if (job) {
+      job.status = body.status as any;
+      if (body.final_price) job.final_price = body.final_price;
+      return job as unknown as T;
+    }
+  }
+  if (endpoint.includes('/supervisor-verify')) {
+    const parts = endpoint.split('/');
+    const jobId = parseInt(parts[2]);
+    const job = stateJobs.find(j => j.id === jobId);
+    if (job) {
+      job.supervisor_verified = true;
+      return job as unknown as T;
+    }
+  }
+  if (endpoint.startsWith('/jobs')) return stateJobs as unknown as T;
+
+  // Allocation
+  if (endpoint.startsWith('/allocation/evaluate')) return MOCK_ALLOCATION_EVALUATION as unknown as T;
+  if (endpoint.startsWith('/allocation/auto-assign')) {
+    const parts = endpoint.split('/');
+    const jobId = parseInt(parts[3]);
+    const job = stateJobs.find(j => j.id === jobId);
+    if (job) {
+      job.status = 'ASSIGNED';
+      job.assigned_worker_id = 3;
+      job.assigned_worker_name = 'Mohd. Imran Qureshi';
+      job.assigned_worker_phone = '+91 98188 45678';
+    }
+    return { success: true, message: 'Worker auto-assigned based on explainable 6-dimension scoring' } as unknown as T;
+  }
+  if (endpoint.startsWith('/allocation/manual-assign')) {
+    const parts = endpoint.split('/');
+    const jobId = parseInt(parts[3]);
+    const job = stateJobs.find(j => j.id === jobId);
+    if (job) {
+      job.status = 'ASSIGNED';
+      const w = stateWorkers.find(wk => wk.id === body.worker_id) || stateWorkers[0];
+      job.assigned_worker_id = w.id;
+      job.assigned_worker_name = w.name;
+      job.assigned_worker_phone = w.phone;
+    }
+    return { success: true, message: 'Worker manually assigned by coordinator' } as unknown as T;
+  }
+
+  // Settlements
+  if (endpoint.startsWith('/settlements/simulate-payment')) {
+    return { success: true, payment_id: 'TXN-SIM-2026-9901', status: 'PAID' } as unknown as T;
+  }
+  if (endpoint.startsWith('/settlements/cooperative')) {
+    return {
+      total_gross: 284500,
+      worker_disbursed: 227600,
+      cooperative_retained: 42675,
+      welfare_pool_funded: 14225,
+      settlement_count: 412,
+    } as unknown as T;
+  }
+  if (endpoint.startsWith('/settlements')) {
+    return [
+      { id: 1, booking_ref: 'KS-JOB-2026-0888', gross_amount: 850, worker_amount: 680, coop_amount: 127.5, welfare_amount: 42.5, status: 'SETTLED', created_at: new Date(Date.now() - 86400000).toISOString() },
+      { id: 2, booking_ref: 'KS-JOB-2026-0889', gross_amount: 499, worker_amount: 399.2, coop_amount: 74.85, welfare_amount: 24.95, status: 'SETTLED', created_at: new Date(Date.now() - 172800000).toISOString() },
+    ] as unknown as T;
+  }
+
+  // Welfare
+  if (endpoint.startsWith('/welfare/worker')) {
+    return {
+      worker_id: 1,
+      eshram_id: 'UAN-9921-4829-1029',
+      welfare_balance: 14200,
+      schemes: [
+        { name: 'PM Shram Yogi Maan-Dhan', policy_no: 'PMSYM-2023-88192', status: 'ACTIVE', renewal_date: '2026-11-30' },
+        { name: 'Pradhan Mantri Suraksha Bima Yojana', policy_no: 'PMSBY-2024-55102', status: 'ACTIVE', renewal_date: '2026-05-31' },
+      ],
+    } as unknown as T;
+  }
+  if (endpoint.startsWith('/welfare/alerts')) {
+    return [
+      { id: 1, worker_name: 'Ramesh Kumar Verma', scheme: 'PMSBY Insurance Renewal', message: 'Annual accident insurance premium deduction due in 18 days', urgency: 'MEDIUM' },
+      { id: 2, worker_name: 'Suresh Chandra Sharma', scheme: 'State BOCW Card', message: 'Triennial biometric verification window open at District Welfare Office', urgency: 'LOW' },
+    ] as unknown as T;
+  }
+
+  // Analytics
+  if (endpoint.startsWith('/analytics/forecast')) return MOCK_FORECAST as unknown as T;
+  if (endpoint.startsWith('/analytics/skill-gaps')) {
+    return [
+      { trade: 'Plumber', active_workers: 18, projected_demand: 24, gap: -6, status: 'DEFICIT' },
+      { trade: 'Electrician', active_workers: 24, projected_demand: 20, gap: 4, status: 'SURPLUS' },
+      { trade: 'Carpenter', active_workers: 12, projected_demand: 14, gap: -2, status: 'DEFICIT' },
+      { trade: 'Painter', active_workers: 10, projected_demand: 8, gap: 2, status: 'BALANCED' },
+    ] as unknown as T;
+  }
+  if (endpoint.startsWith('/analytics/heatmap')) {
+    return [
+      { lat: 28.6139, lng: 77.2090, intensity: 0.95, area: 'Connaught Place' },
+      { lat: 28.5355, lng: 77.2600, intensity: 0.78, area: 'Nehru Place' },
+      { lat: 28.6280, lng: 77.0800, intensity: 0.82, area: 'Janakpuri' },
+      { lat: 28.5244, lng: 77.2066, intensity: 0.65, area: 'Saket' },
+    ] as unknown as T;
+  }
+  if (endpoint.startsWith('/analytics/utilization')) {
+    return {
+      gini_coefficient: 0.21,
+      target_gini: 0.25,
+      fairness_rating: 'OPTIMAL (High Income Equality)',
+      average_weekly_jobs: 3.2,
+      utilization_distribution: [
+        { bracket: '0-2 jobs/wk', worker_count: 8 },
+        { bracket: '3-4 jobs/wk', worker_count: 42 },
+        { bracket: '5+ jobs/wk', worker_count: 14 },
+      ],
+    } as unknown as T;
+  }
+
+  // Institutional
+  if (endpoint.startsWith('/institutional/projects')) return MOCK_PROJECTS as unknown as T;
+
+  return {} as unknown as T;
+}
+
 // Token storage helper
 export const getStoredToken = () => localStorage.getItem('karmsetu_token');
 export const setStoredToken = (token: string) => localStorage.setItem('karmsetu_token', token);
@@ -197,17 +455,20 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({ detail: 'Network error occurred' }));
-    throw new Error(errorBody.detail || `Request failed with status ${response.status}`);
+    if (!response.ok) {
+      return getMockFallback<T>(endpoint, options);
+    }
+
+    return await response.json();
+  } catch (error) {
+    return getMockFallback<T>(endpoint, options);
   }
-
-  return response.json();
 }
 
 export const api = {
