@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: karmsetu-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PROJECT_NAME=KarmSetu Backend
+      - SECRET_KEY=karmsetu-super-secret-sih-2026-production-ready-jwt-key
+      - DATABASE_URL=sqlite:///./karmsetu.db
+      - BACKEND_CORS_ORIGINS=["http://localhost:3000","http://localhost:3001","http://127.0.0.1:3000","http://localhost:8000"]
+    volumes:
+      - ./backend/karmsetu.db:/app/karmsetu.db
+    restart: unless-stopped
+
+  # Optional Postgres service for production testing:
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: karmsetu-postgres
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: password
+  #     POSTGRES_DB: karmsetu
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:
