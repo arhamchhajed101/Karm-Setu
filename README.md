@@ -2,6 +2,12 @@
 ### Cooperative-Owned Digital Service Marketplace for Labour Cooperatives
 **Smart India Hackathon (SIH 2026)** | Problem Statement: Digital Operating Platform for Labour Cooperatives
 
+[![GitHub Pages Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-success?style=for-the-badge&logo=github)](https://arhamchhajed101.github.io/Karm-Setu/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://github.com/arhamchhajed101/Karm-Setu)
+[![React](https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-61DAFB?style=for-the-badge&logo=react)](https://github.com/arhamchhajed101/Karm-Setu)
+
+> 🚀 **Live Working Website**: **[https://arhamchhajed101.github.io/Karm-Setu/](https://arhamchhajed101.github.io/Karm-Setu/)**
+
 ---
 
 ## 📌 Executive Summary
